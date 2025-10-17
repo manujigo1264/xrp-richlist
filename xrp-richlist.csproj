@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>xrp_richlist</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Folder Include="database\" />
+    <Folder Include="public\" />
+    <Folder Include="scripts\" />
+    <Folder Include="src\lib\" />
+    <Folder Include="src\services\" />
+    <Folder Include="src\types\" />
+    <Folder Include="src\components\" />
+  </ItemGroup>
+
+</Project>
