@@ -1,6 +1,17 @@
 import RichList from '@/components/RichList';
+import Stats from '@/components/Stats';
+import DistributionChart from '@/components/DistributionChart';
 
-export default function Home() {
+async function getStats() {
+    const res = await fetch('http://localhost:3000/api/stats', {
+        cache: 'no-store'
+    });
+    return res.json();
+}
+
+export default async function Home() {
+    const stats = await getStats();
+
     return (
         <main className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -12,6 +23,10 @@ export default function Home() {
                         Real-time XRP wealth distribution and analytics
                     </p>
                 </div>
+
+                <Stats {...stats} />
+
+                <DistributionChart />
 
                 <RichList />
             </div>
