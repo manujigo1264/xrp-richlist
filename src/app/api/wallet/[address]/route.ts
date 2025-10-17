@@ -2,10 +2,10 @@
 
 export async function GET(
     request: Request,
-    { params }: { params: { address: string } }
+    { params }: { params: Promise<{ address: string }> }
 ) {
     try {
-        const address = params.address;
+        const { address } = await params;
 
         // Get account info
         const accountResponse = await fetch('https://s1.ripple.com:51234/', {
