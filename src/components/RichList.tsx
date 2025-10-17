@@ -82,8 +82,10 @@ export default function RichList() {
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                     #{account.rank}
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-blue-400">
-                                    {account.address}
+                                <td className="px-6 py-4 whitespace-nowrap text-sm font-mono">
+                                    <a href={`/wallet/${account.address}`} className="text-blue-400 hover:text-blue-300 hover:underline">
+                                        {account.address}
+                                    </a>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold">
                                     {account.balance.toLocaleString(undefined, {
