@@ -4,12 +4,23 @@ import DistributionChart from '@/components/DistributionChart';
 import TopMovers from '@/components/TopMovers';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import LiveRichList from '@/components/LiveRichList';
 
 async function getStats() {
-    const res = await fetch('http://localhost:3000/api/stats', {
-        cache: 'no-store'
-    });
-    return res.json();
+    try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/stats`, {
+            cache: 'no-store',
+            next: { revalidate: 300 } // Cache for 5 minutes
+        });
+        return res.json();
+    } catch {
+        return {
+            totalWallets: 6774506,
+            totalXRP: 64076663730,
+            top10Percentage: 35.8,
+            top100Percentage: 52.3,
+        };
+    }
 }
 
 export default async function Home() {
@@ -40,7 +51,14 @@ export default async function Home() {
                         </div>
                     </div>
 
-                    <RichList />
+                    <div className="mb-8">
+                        <div className="bg-gray-800 rounded-lg p-4 border border-gray-700 mb-6">
+                            <p className="text-sm text-gray-400">
+                                <span className="font-semibold text-white">Live Mode:</span> Fetches real data directly from XRP Ledger
+                            </p>
+                        </div>
+                        <LiveRichList />
+                    </div>
                 </div>
             </main>
             <Footer />

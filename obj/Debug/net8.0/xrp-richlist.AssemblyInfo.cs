@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("xrp-richlist")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+eea79a7311cf0938f06ce4adf31d80d7d4b58af2")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+05d49b68db71c0b620e06e33c8a3a876d00b62b1")]
 [assembly: System.Reflection.AssemblyProductAttribute("xrp-richlist")]
 [assembly: System.Reflection.AssemblyTitleAttribute("xrp-richlist")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

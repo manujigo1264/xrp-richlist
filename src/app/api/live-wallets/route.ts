@@ -1,12 +1,15 @@
 ﻿import { NextResponse } from 'next/server';
 
-export async function GET() {
+export async function GET(request: Request) {
+    const { searchParams } = new URL(request.url);
+    const limit = parseInt(searchParams.get('limit') || '50');
+
     try {
         const accounts: any[] = [];
         let marker: string | undefined = undefined;
 
-        // Fetch more pages to calculate real stats
-        for (let i = 0; i < 10; i++) {
+        // Fetch data from public XRP Ledger API
+        for (let i = 0; i < 3; i++) {
             const body: any = {
                 method: 'ledger_data',
                 params: [{
@@ -32,6 +35,7 @@ export async function GET() {
                 for (const entry of data.result.state) {
                     if (entry.LedgerEntryType === 'AccountRoot') {
                         accounts.push({
+                            address: entry.Account,
                             balance: parseFloat(entry.Balance) / 1000000
                         });
                     }
@@ -45,32 +49,27 @@ export async function GET() {
         // Sort by balance
         accounts.sort((a, b) => b.balance - a.balance);
 
-        // Calculate stats
-        const totalXRP = accounts.reduce((sum, acc) => sum + acc.balance, 0);
-        const top10Total = accounts.slice(0, 10).reduce((sum, acc) => sum + acc.balance, 0);
-        const top100Total = accounts.slice(0, 100).reduce((sum, acc) => sum + acc.balance, 0);
+        // Add ranks
+        const ranked = accounts.slice(0, limit).map((acc, idx) => ({
+            rank: idx + 1,
+            address: acc.address,
+            balance: acc.balance
+        }));
 
-        const stats = {
-            totalWallets: accounts.length,
-            totalXRP: totalXRP,
-            top10Percentage: (top10Total / totalXRP) * 100,
-            top100Percentage: (top100Total / totalXRP) * 100,
-        };
-
-        return NextResponse.json(stats);
+        return NextResponse.json({
+            wallets: ranked,
+            total: accounts.length,
+            lastUpdate: new Date().toISOString()
+        });
 
     } catch (error) {
-        console.error('Error fetching stats:', error);
-        // Return mock data on error
+        console.error('Error fetching live data:', error);
         return NextResponse.json({
-            totalWallets: 6774506,
-            totalXRP: 64076663730,
-            top10Percentage: 35.8,
-            top100Percentage: 52.3,
-        });
+            error: 'Failed to fetch data from XRP Ledger',
+            details: error instanceof Error ? error.message : 'Unknown error'
+        }, { status: 500 });
     }
 }
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-export const revalidate = 300; // Cache for 5 minutes

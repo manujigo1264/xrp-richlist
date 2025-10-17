@@ -3,38 +3,27 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
 interface WalletPageProps {
-    params: {
+    params: Promise<{
         address: string;
-    };
+    }>;
 }
 
 async function getWalletDetails(address: string) {
-    // Mock data - replace with real API call later
-    return {
-        address: address,
-        balance: 2000000.003,
-        rank: 1,
-        firstSeen: '2023-01-15T10:30:00Z',
-        lastActive: '2024-10-16T08:45:00Z',
-        totalTransactions: 15234,
-        inboundTotal: 2500000,
-        outboundTotal: 500000,
-        netFlow: 2000000
-    };
-}
+    try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/wallet/${address}`, {
+            cache: 'no-store'
+        });
 
-async function getWalletTransactions(address: string) {
-    // Mock transaction data
-    return [
-        { id: 1, type: 'received', amount: 50000, from: 'rN7n7otQDd6FczFgLdlqtyMVrn3HMbjhpZ', timestamp: '2024-10-16T08:45:00Z' },
-        { id: 2, type: 'sent', amount: 25000, to: 'rLNaPoKeeBjZe2qs6x52yVPZpZ8td4dc6w', timestamp: '2024-10-15T14:20:00Z' },
-        { id: 3, type: 'received', amount: 100000, from: 'rDsbeomae4FXwgQTJp9Rs64Qg9vDiTCdBv', timestamp: '2024-10-14T11:30:00Z' },
-    ];
+        if (!res.ok) return null;
+        return res.json();
+    } catch {
+        return null;
+    }
 }
 
 export default async function WalletPage({ params }: WalletPageProps) {
-    const wallet = await getWalletDetails(params.address);
-    const transactions = await getWalletTransactions(params.address);
+    const { address } = await params;
+    const wallet = await getWalletDetails(address);
 
     if (!wallet) {
         notFound();
@@ -64,52 +53,35 @@ export default async function WalletPage({ params }: WalletPageProps) {
                         <p className="text-gray-400 font-mono text-sm break-all">{wallet.address}</p>
                     </div>
 
+                    {/* Live Data Badge */}
+                    <div className="bg-green-900/20 border border-green-500 rounded-lg p-4 mb-6 flex items-center gap-2">
+                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                        <span className="text-green-400 text-sm font-medium">LIVE DATA from XRP Ledger</span>
+                    </div>
+
                     {/* Stats Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
                         <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
                             <div className="text-gray-400 text-sm mb-2">Balance</div>
                             <div className="text-3xl font-bold text-green-400">
-                                {wallet.balance.toLocaleString()} XRP
+                                {wallet.balance.toLocaleString(undefined, {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 6
+                                })} XRP
                             </div>
                         </div>
 
                         <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-                            <div className="text-gray-400 text-sm mb-2">Rank</div>
-                            <div className="text-3xl font-bold text-purple-400">#{wallet.rank}</div>
+                            <div className="text-gray-400 text-sm mb-2">Account Sequence</div>
+                            <div className="text-3xl font-bold text-purple-400">
+                                {wallet.sequence.toLocaleString()}
+                            </div>
                         </div>
 
                         <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-                            <div className="text-gray-400 text-sm mb-2">Total Transactions</div>
+                            <div className="text-gray-400 text-sm mb-2">Recent Transactions</div>
                             <div className="text-3xl font-bold text-blue-400">
-                                {wallet.totalTransactions.toLocaleString()}
-                            </div>
-                        </div>
-
-                        <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-                            <div className="text-gray-400 text-sm mb-2">Net Flow</div>
-                            <div className={`text-3xl font-bold ${wallet.netFlow >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                                {wallet.netFlow >= 0 ? '+' : ''}{wallet.netFlow.toLocaleString()} XRP
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Activity Info */}
-                    <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 mb-8">
-                        <h2 className="text-2xl font-bold mb-4">Activity Information</h2>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div>
-                                <div className="text-gray-400 text-sm mb-1">First Seen</div>
-                                <div className="text-lg">{formatDate(wallet.firstSeen)}</div>
-                            </div>
-                            <div>
-                                <div className="text-gray-400 text-sm mb-1">Last Active</div>
-                                <div className="text-lg">{formatDate(wallet.lastActive)}</div>
-                            </div>
-                            <div>
-                                <div className="text-gray-400 text-sm mb-1">Total Received</div>
-                                <div className="text-lg text-green-400">
-                                    {wallet.inboundTotal.toLocaleString()} XRP
-                                </div>
+                                {wallet.transactions.length}
                             </div>
                         </div>
                     </div>
@@ -117,39 +89,45 @@ export default async function WalletPage({ params }: WalletPageProps) {
                     {/* Recent Transactions */}
                     <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
                         <h2 className="text-2xl font-bold mb-4">Recent Transactions</h2>
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full">
-                                <thead>
-                                    <tr className="border-b border-gray-700">
-                                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-400">Type</th>
-                                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-400">Amount</th>
-                                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-400">Counterparty</th>
-                                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-400">Time</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-700">
-                                    {transactions.map((tx) => (
-                                        <tr key={tx.id} className="hover:bg-gray-750">
-                                            <td className="px-4 py-4">
-                                                <span className={`px-2 py-1 rounded text-xs font-medium ${tx.type === 'received' ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'
-                                                    }`}>
-                                                    {tx.type}
-                                                </span>
-                                            </td>
-                                            <td className="px-4 py-4 font-semibold">
-                                                {tx.amount.toLocaleString()} XRP
-                                            </td>
-                                            <td className="px-4 py-4 font-mono text-sm text-blue-400">
-                                                {'from' in tx ? tx.from : tx.to}
-                                            </td>
-                                            <td className="px-4 py-4 text-sm text-gray-400">
-                                                {formatDate(tx.timestamp)}
-                                            </td>
+                        {wallet.transactions.length === 0 ? (
+                            <p className="text-gray-400 text-center py-8">No recent transactions</p>
+                        ) : (
+                            <div className="overflow-x-auto">
+                                <table className="min-w-full">
+                                    <thead>
+                                        <tr className="border-b border-gray-700">
+                                            <th className="px-4 py-3 text-left text-sm font-medium text-gray-400">Type</th>
+                                            <th className="px-4 py-3 text-left text-sm font-medium text-gray-400">Amount</th>
+                                            <th className="px-4 py-3 text-left text-sm font-medium text-gray-400">Counterparty</th>
+                                            <th className="px-4 py-3 text-left text-sm font-medium text-gray-400">Time</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-700">
+                                        {wallet.transactions.map((tx: any) => (
+                                            <tr key={tx.id} className="hover:bg-gray-750">
+                                                <td className="px-4 py-4">
+                                                    <span className={`px-2 py-1 rounded text-xs font-medium ${tx.type === 'received' ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'
+                                                        }`}>
+                                                        {tx.type}
+                                                    </span>
+                                                </td>
+                                                <td className="px-4 py-4 font-semibold">
+                                                    {tx.amount.toLocaleString()} XRP
+                                                </td>
+                                                <td className="px-4 py-4 font-mono text-sm text-blue-400">
+                                                    <a href={`/wallet/${tx.counterparty}`} className="hover:underline">
+                                                        {tx.counterparty.substring(0, 15)}...
+                                                    </a>
+                                                </td>
+                                                <td className="px-4 py-4 text-sm text-gray-400">
+                                                    {formatDate(tx.timestamp)}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
                     </div>
                 </div>
             </main>
