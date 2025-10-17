@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import SearchBar from './SearchBar';
+import Filters, { FilterOptions } from './Filters';
+import ExportButton from './ExportButton';
 
 interface Account {
     rank: number;
@@ -23,13 +25,17 @@ export default function RichList() {
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [total, setTotal] = useState(0);
+    const [filters, setFilters] = useState<FilterOptions>({ sortBy: 'rank' });
+    const [showFilters, setShowFilters] = useState(false);
 
     useEffect(() => {
         setLoading(true);
         const params = new URLSearchParams({
             search,
             page: page.toString(),
-            limit: '20'
+            limit: '20',
+            ...(filters.minBalance && { minBalance: filters.minBalance.toString() }),
+            ...(filters.maxBalance && { maxBalance: filters.maxBalance.toString() }),
         });
 
         fetch(`/api/wallets?${params}`)
@@ -40,10 +46,15 @@ export default function RichList() {
                 setTotalPages(data.totalPages);
                 setLoading(false);
             });
-    }, [search, page]);
+    }, [search, page, filters]);
 
     const handleSearch = (query: string) => {
         setSearch(query);
+        setPage(1);
+    };
+
+    const handleFilterChange = (newFilters: FilterOptions) => {
+        setFilters(newFilters);
         setPage(1);
     };
 
@@ -53,13 +64,24 @@ export default function RichList() {
 
     return (
         <div>
-            <div className="mb-6 flex items-center justify-between">
+            <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
                 <div className="text-gray-400">
                     Showing {accounts.length} of {total} wallets
+                </div>
+                <div className="flex gap-2">
+                    <button
+                        onClick={() => setShowFilters(!showFilters)}
+                        className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm transition-colors"
+                    >
+                        {showFilters ? 'Hide Filters' : 'Show Filters'}
+                    </button>
+                    <ExportButton data={accounts} />
                 </div>
             </div>
 
             <SearchBar onSearch={handleSearch} />
+
+            {showFilters && <Filters onFilterChange={handleFilterChange} />}
 
             <div className="overflow-x-auto rounded-lg border border-gray-700">
                 <table className="min-w-full bg-gray-800">
